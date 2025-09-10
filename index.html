@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeMaster AI Pro</title>
+    <meta name="description" content="Professional AI-powered trading assistant for cTrader">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- cTrader WebView SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@spotware-web-team/sdk@latest/dist/index.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="logo-container">
+                <i class="fas fa-robot"></i>
+                <h1>TradeMaster AI Pro</h1>
+            </div>
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Initializing AI Trading Copilot...</p>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <span class="logo-text">TradeMaster AI Pro</span>
+                </div>
+                <div class="connection-status" id="connection-status">
+                    <i class="fas fa-circle status-indicator"></i>
+                    <span>Connecting...</span>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="symbol-info" id="symbol-info">
+                    <span class="symbol-name">EURUSD</span>
+                    <span class="symbol-price">1.0850</span>
+                    <span class="symbol-change positive">+0.0012</span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-icon" id="voice-toggle" title="Voice Commands">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="btn-icon" id="settings-toggle" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="btn-icon theme-toggle" id="theme-toggle" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Left Sidebar -->
+            <aside class="sidebar-left">
+                <!-- Watchlist -->
+                <div class="panel watchlist-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-list"></i> Watchlist</h3>
+                        <button class="btn-icon btn-small" title="Add Symbol">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content" id="watchlist">
+                        <!-- Dynamic watchlist items -->
+                    </div>
+                </div>
+
+                <!-- Market Scanner -->
+                <div class="panel scanner-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-radar-alt"></i> Scanner</h3>
+                    </div>
+                    <div class="panel-content" id="market-scanner">
+                        <!-- Dynamic scanner results -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Content -->
+            <div class="main-content">
+                <!-- AI Chat Interface -->
+                <div class="panel ai-chat-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-robot"></i> AI Trading Assistant</h3>
+                        <div class="chat-controls">
+                            <button class="btn-icon btn-small" id="clear-chat" title="Clear Chat">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="chat-container" id="chat-container">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="message ai-message">
+                                    <div class="message-avatar">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="message-content">
+                                        <p>Hello! I'm your AI Trading Assistant. I can help you with:</p>
+                                        <ul>
+                                            <li>Market analysis and trade ideas</li>
+                                            <li>Risk management and position sizing</li>
+                                            <li>Strategy optimization</li>
+                                            <li>Real-time trade execution</li>
+                                        </ul>
+                                        <p>How can I assist you today?</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-input-container">
+                                <div class="chat-input-wrapper">
+                                    <input type="text" id="chat-input" placeholder="Ask me anything about trading..." maxlength="500">
+                                    <button class="btn-send" id="send-message">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                                <div class="quick-actions">
+                                    <button class="quick-action-btn" data-action="analyze">
+                                        <i class="fas fa-chart-line"></i>
+                                        Analyze Market
+                                    </button>
+                                    <button class="quick-action-btn" data-action="risk">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Calculate Risk
+                                    </button>
+                                    <button class="quick-action-btn" data-action="signals">
+                                        <i class="fas fa-bullseye"></i>
+                                        Get Signals
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart and Analysis -->
+                <div class="panel chart-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-chart-area"></i> Live Chart & Analysis</h3>
+                        <div class="chart-controls">
+                            <select id="timeframe-select" class="select-small">
+                                <option value="M1">M1</option>
+                                <option value="M5" selected>M5</option>
+                                <option value="M15">M15</option>
+                                <option value="H1">H1</option>
+                                <option value="H4">H4</option>
+                                <option value="D1">D1</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="chart-container">
+                            <canvas id="price-chart"></canvas>
+                        </div>
+                        <div class="analysis-insights" id="analysis-insights">
+                            <div class="insight-item">
+                                <i class="fas fa-trending-up text-success"></i>
+                                <span>Bullish momentum detected</span>
+                            </div>
+                            <div class="insight-item">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                <span>High volatility period</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <aside class="sidebar-right">
+                <!-- Trading Panel -->
+                <div class="panel trading-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-exchange-alt"></i> Quick Trade</h3>
+                    </div>
+                    <div class="panel-content">
+                        <div class="trade-form" id="trade-form">
+                            <div class="trade-buttons">
+                                <button class="btn-buy" id="btn-buy">
+                                    <i class="fas fa-arrow-up"></i>
+                                    BUY
+                                </button>
+                                <button class="btn-sell" id="btn-sell">
+                                    <i class="fas fa-arrow-down"></i>
+                                    SELL
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label>Volume</label>
+                                <input type="number" id="volume-input" value="0.01" step="0.01" min="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Stop Loss</label>
+                                <input type="number" id="sl-input" placeholder="Optional" step="0.0001">
+                            </div>
+                            <div class="form-group">
+                                <label>Take Profit</label>
+                                <input type="number" id="tp-input" placeholder="Optional" step="0.0001">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Portfolio Panel -->
+                <div class="panel portfolio-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-wallet"></i> Portfolio</h3>
+                    </div>
+                    <div class="panel-content" id="portfolio-content">
+                        <div class="portfolio-summary">
+                            <div class="summary-item">
+                                <span class="label">Balance:</span>
+                                <span class="value">$10,000.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Equity:</span>
+                                <span class="value">$10,150.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">P&L:</span>
+                                <span class="value positive">+$150.00</span>
+                            </div>
+                        </div>
+                        <div class="positions-list" id="positions-list">
+                            <!-- Dynamic positions -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- News Feed -->
+                <div class="panel news-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-newspaper"></i> Market News</h3>
+                    </div>
+                    <div class="panel-content" id="news-feed">
+                        <!-- Dynamic news items -->
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <span class="footer-text">TradeMaster AI Pro v1.0.0 | Connected to cTrader</span>
+                <div class="footer-links">
+                    <button class="link-btn" id="help-link">Help</button>
+                    <button class="link-btn" id="feedback-link">Feedback</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Voice Recognition Modal -->
+    <div id="voice-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Voice Commands</h3>
+                <button class="btn-close" id="close-voice-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="voice-status">
+                    <div class="voice-indicator">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <p>Listening... Speak your command</p>
+                </div>
+                <div class="voice-examples">
+                    <h4>Example Commands:</h4>
+                    <ul>
+                        <li>"Buy EURUSD with 1% risk"</li>
+                        <li>"Analyze current market trend"</li>
+                        <li>"Calculate position size for GBPUSD"</li>
+                        <li>"Close all profitable positions"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('[App] ServiceWorker registered successfully:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('[App] ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+
+    <!-- JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/ctrader-sdk.js"></script>
+    <script src="js/ai-assistant.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/trading.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- Performance Optimization -->
+    <script>
+        // Preload critical resources
+        const criticalResources = [
+            'https://cdn.jsdelivr.net/npm/chart.js',
+            'https://cdn.jsdelivr.net/npm/@spotware-web-team/sdk@latest/dist/index.js'
+        ];
+        
+        criticalResources.forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'script';
+            link.href = url;
+            document.head.appendChild(link);
+        });
+        
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            if (window.performance && window.performance.timing) {
+                const timing = window.performance.timing;
+                const loadTime = timing.loadEventEnd - timing.navigationStart;
+                console.log(`[Performance] Page load time: ${loadTime}ms`);
+                
+                // Send to analytics (if configured)
+                if (window.gtag) {
+                    gtag('event', 'page_load_time', {
+                        value: Math.round(loadTime),
+                        custom_parameter: 'trademaster_ai_pro'
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
