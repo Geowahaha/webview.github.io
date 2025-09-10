@@ -74,28 +74,47 @@ class TradeMasterApp {
      */
     async initializeComponents() {
         try {
-            // Components are already initialized by their respective files
-            this.components = {
-                ctraderSDK: window.ctraderSDK,
-                aiAssistant: window.aiAssistant,
-                chartManager: window.chartManager,
-                tradingEngine: window.tradingEngine,
-                voiceManager: window.voiceManager
-            };
+            // Wait for components to load with timeout
+            let attempts = 0;
+            const maxAttempts = 30; // 3 seconds
             
-            // Verify all components are available
-            const missingComponents = Object.keys(this.components)
-                .filter(key => !this.components[key]);
-            
-            if (missingComponents.length > 0) {
-                throw new Error(`Missing components: ${missingComponents.join(', ')}`);
+            while (attempts < maxAttempts) {
+                this.components = {
+                    ctraderSDK: window.ctraderSDK,
+                    aiAssistant: window.aiAssistant,
+                    chartManager: window.chartManager,
+                    tradingEngine: window.tradingEngine,
+                    voiceManager: window.voiceManager
+                };
+                
+                // Check if all components are loaded
+                const missingComponents = Object.keys(this.components)
+                    .filter(key => !this.components[key]);
+                
+                if (missingComponents.length === 0) {
+                    Logger.info('All components initialized successfully');
+                    return;
+                }
+                
+                // Wait 100ms before next attempt
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
             }
             
-            Logger.info('All components initialized successfully');
+            // If still missing components, continue with available ones
+            const availableComponents = Object.keys(this.components)
+                .filter(key => this.components[key]);
+            
+            Logger.warn('Some components missing, continuing with:', availableComponents);
+            
+            if (availableComponents.length === 0) {
+                throw new Error('No components could be initialized');
+            }
             
         } catch (error) {
             Logger.error('Component initialization failed:', error);
-            throw error;
+            // Don't throw error - continue with demo mode
+            this.showInitializationWarning(error);
         }
     }
     
@@ -661,6 +680,38 @@ class TradeMasterApp {
                 this.appContainer.style.opacity = '1';
             }, 100);
         }
+    }
+    
+    /**
+     * Show initialization warning (non-fatal)
+     */
+    showInitializationWarning(error) {
+        Logger.warn('Initialization warning:', error);
+        
+        // Show warning but continue loading
+        const warningMessage = `
+            <div style="
+                position: fixed; top: 20px; right: 20px;
+                background: var(--warning-color); padding: 1rem; border-radius: 6px;
+                color: white; max-width: 300px; z-index: 10000;
+                font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            ">
+                <strong>Demo Mode</strong><br>
+                Some features may be limited. Running in demonstration mode.
+                <button onclick="this.parentElement.remove()" style="
+                    float: right; background: none; border: none; color: white; 
+                    cursor: pointer; font-size: 1rem; margin-left: 10px;
+                ">×</button>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', warningMessage);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            const warning = document.querySelector('[style*="warning-color"]');
+            if (warning) warning.remove();
+        }, 10000);
     }
     
     /**
