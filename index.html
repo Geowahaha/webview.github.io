@@ -20,9 +20,6 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- cTrader WebView SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@spotware-web-team/sdk@latest/dist/index.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -453,20 +450,20 @@
         }
     </script>
     
-    <!-- Load remaining components asynchronously -->
-    <script async src="js/ctrader-sdk.js"></script>
-    <script async src="js/ai-assistant.js"></script>
-    <script async src="js/chart.js"></script>
-    <script async src="js/trading.js"></script>
-    <script async src="js/voice.js"></script>
-    <script async src="js/main.js"></script>
+    <!-- Load remaining components as ES modules -->
+    <script type="module" src="js/config.js"></script>
+    <script type="module" src="js/ctrader-sdk.js"></script>
+    <script type="module" src="js/ai-assistant.js"></script>
+    <script type="module" src="js/chart.js"></script>
+    <script type="module" src="js/trading.js"></script>
+    <script type="module" src="js/voice.js"></script>
+    <script type="module" src="js/main.js"></script>
 
     <!-- Performance Optimization -->
     <script>
         // Preload critical resources
         const criticalResources = [
-            'https://cdn.jsdelivr.net/npm/chart.js',
-            'https://cdn.jsdelivr.net/npm/@spotware-web-team/sdk@latest/dist/index.js'
+            'https://cdn.jsdelivr.net/npm/chart.js'
         ];
         
         criticalResources.forEach(url => {

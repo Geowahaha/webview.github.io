@@ -3,6 +3,38 @@
  * Orchestrates all components and manages application lifecycle
  */
 
+// Wait for all modules to load
+let ctraderSDK, aiAssistant, chartManager, tradingEngine, voiceManager;
+
+// Initialize modules when available
+const initializeModules = async () => {
+    // Wait for global instances to be available
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    while (attempts < maxAttempts) {
+        if (window.ctraderSDK && window.aiAssistant && window.chartManager && 
+            window.tradingEngine && window.voiceManager) {
+            
+            ctraderSDK = window.ctraderSDK;
+            aiAssistant = window.aiAssistant;
+            chartManager = window.chartManager;
+            tradingEngine = window.tradingEngine;
+            voiceManager = window.voiceManager;
+            
+            console.log('✅ All modules loaded successfully');
+            break;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (attempts >= maxAttempts) {
+        console.warn('⚠️ Some modules failed to load, using fallback mode');
+    }
+};
+
 class TradeMasterApp {
     constructor() {
         this.isInitialized = false;

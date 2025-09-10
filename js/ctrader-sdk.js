@@ -1,52 +1,192 @@
 /**
- * TradeMaster AI Pro - cTrader SDK Integration
- * Handles all cTrader WebView SDK interactions
+ * TradeMaster AI Pro - Real cTrader WebView SDK Integration
+ * Official cTrader WebView Plugin SDK Implementation
  */
+
+// Import real cTrader SDK from CDN
+import { 
+    createClientAdapter, 
+    createLogger,
+    handleConfirmEvent,
+    registerEvent,
+    quoteEvent,
+    executionEvent,
+    getAccountInformation,
+    getLightSymbolList,
+    createNewOrder,
+    subscribeQuotes,
+    unsubscribeQuotes,
+    modifyOrder,
+    closePosition,
+    cancelOrder
+} from 'https://esm.sh/@ctrader/sdk';
+
+import { take, tap } from 'https://esm.sh/rxjs/operators';
 
 class CTraderSDK {
     constructor() {
         this.isConnected = false;
         this.isInitialized = false;
-        this.clientAdapter = null;
-        this.currentSymbol = initializeSymbol();
+        this.adapter = null;
+        this.logger = null;
+        this.currentSymbol = this.getUrlSymbol() || 'EURUSD';
         this.accountInfo = null;
         this.positions = new Map();
         this.quotes = new Map();
         this.connectionCallbacks = [];
         this.quoteCallbacks = [];
         this.executionCallbacks = [];
-        this.reconnectAttempts = 0;
-        this.heartbeatInterval = null;
         
         this.init();
     }
     
     /**
-     * Initialize the cTrader SDK connection
+     * Get symbol from URL parameters
+     */
+    getUrlSymbol() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('symbol') || 'EURUSD';
+    }
+
+    /**
+     * Initialize the real cTrader WebView SDK
      */
     async init() {
         try {
-            Logger.info('Initializing cTrader SDK...');
+            console.log('🚀 Initializing Real cTrader WebView SDK...');
             
-            // Check if SDK is available
-            if (typeof window.cTraderSDK === 'undefined') {
-                Logger.warn('cTrader SDK not found, using mock mode for development');
-                this.initMockMode();
-                return;
-            }
+            // Create logger with debugging enabled
+            this.logger = createLogger(location.href.includes("showLogs"));
             
-            // Create client adapter
-            this.clientAdapter = new window.cTraderSDK.ClientAdapter();
+            // Create client adapter for WebView plugin
+            this.adapter = createClientAdapter({ logger: this.logger });
             
-            // Set up event listeners
-            this.setupEventListeners();
+            console.log('📡 SDK Adapter created, starting handshake...');
             
-            // Start connection process
-            await this.connect();
+            // Perform SDK handshake and registration
+            await this.performHandshake();
             
         } catch (error) {
-            Logger.error('SDK initialization failed:', error);
-            this.handleConnectionError(error);
+            console.error('❌ Real SDK initialization failed:', error);
+            console.log('🔄 Falling back to mock mode for testing...');
+            this.initMockMode();
+        }
+    }
+
+    /**
+     * Perform cTrader WebView SDK handshake
+     */
+    async performHandshake() {
+        try {
+            // Step 1: Confirm handshake
+            console.log('🤝 Starting handshake confirmation...');
+            handleConfirmEvent(this.adapter, {}).pipe(take(1)).subscribe({
+                next: () => console.log('✅ Handshake confirmed'),
+                error: (error) => console.error('❌ Handshake failed:', error)
+            });
+            
+            // Step 2: Register plugin with cTrader
+            console.log('📝 Registering WebView plugin...');
+            registerEvent(this.adapter).pipe(
+                take(1),
+                tap(() => {
+                    console.log('✅ Plugin registered successfully!');
+                    
+                    // Confirm registration
+                    handleConfirmEvent(this.adapter, {}).pipe(take(1)).subscribe();
+                    
+                    // Mark as connected
+                    this.isConnected = true;
+                    this.updateConnectionStatus('connected');
+                    
+                    // Start event listeners
+                    this.startEventListeners();
+                    
+                    // Load initial data
+                    this.loadInitialData();
+                })
+            ).subscribe({
+                error: (error) => {
+                    console.error('❌ Plugin registration failed:', error);
+                    throw error;
+                }
+            });
+            
+        } catch (error) {
+            console.error('❌ Handshake process failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Start listening to cTrader events
+     */
+    startEventListeners() {
+        console.log('👂 Starting event listeners...');
+        
+        // Listen for quote updates
+        quoteEvent(this.adapter).pipe(
+            tap((quote) => {
+                console.log('📈 Quote received:', quote);
+                this.handleQuoteUpdate(quote);
+            })
+        ).subscribe();
+        
+        // Listen for execution events
+        executionEvent(this.adapter).pipe(
+            tap((execution) => {
+                console.log('⚡ Execution event:', execution);
+                this.handleExecutionUpdate(execution);
+            })
+        ).subscribe();
+        
+        console.log('✅ Event listeners active');
+    }
+
+    /**
+     * Load initial account and symbol data
+     */
+    async loadInitialData() {
+        try {
+            console.log('📊 Loading initial trading data...');
+            
+            // Get account information
+            getAccountInformation(this.adapter).pipe(
+                take(1),
+                tap((account) => {
+                    console.log('💰 Account info loaded:', account);
+                    this.accountInfo = account;
+                    this.notifyAccountUpdate(account);
+                })
+            ).subscribe();
+            
+            // Get available symbols
+            getLightSymbolList(this.adapter).pipe(
+                take(1),
+                tap((symbols) => {
+                    console.log(`📋 Loaded ${symbols.length} trading symbols`);
+                    this.availableSymbols = symbols;
+                })
+            ).subscribe();
+            
+            // Subscribe to current symbol quotes
+            await this.subscribeToSymbol(this.currentSymbol);
+            
+            // Mark as fully initialized
+            this.isInitialized = true;
+            console.log('🎉 cTrader SDK fully initialized and ready!');
+            
+            // Notify connection callbacks
+            this.connectionCallbacks.forEach(callback => {
+                try {
+                    callback(true);
+                } catch (error) {
+                    console.error('Connection callback error:', error);
+                }
+            });
+            
+        } catch (error) {
+            console.error('❌ Failed to load initial data:', error);
         }
     }
     
@@ -156,20 +296,32 @@ class CTraderSDK {
     }
     
     /**
-     * Subscribe to symbol quotes
+     * Subscribe to symbol quotes using real cTrader SDK
      */
     async subscribeToSymbol(symbol) {
         try {
-            if (!this.isConnected || !this.clientAdapter) {
-                throw new Error('SDK not connected');
+            if (!this.isConnected || !this.adapter) {
+                console.warn('⚠️ SDK not connected, cannot subscribe to quotes');
+                return false;
             }
             
-            Logger.info(`Subscribing to ${symbol} quotes`);
-            await this.clientAdapter.subscribeToQuotes([symbol]);
+            console.log(`📊 Subscribing to ${symbol} quotes...`);
+            
+            subscribeQuotes(this.adapter, { symbolId: symbol }).pipe(
+                take(1),
+                tap(() => {
+                    console.log(`✅ Successfully subscribed to ${symbol} quotes`);
+                    this.currentSymbol = symbol;
+                })
+            ).subscribe({
+                error: (error) => {
+                    console.error(`❌ Failed to subscribe to ${symbol}:`, error);
+                }
+            });
             
             return true;
         } catch (error) {
-            Logger.error(`Failed to subscribe to ${symbol}:`, error);
+            console.error(`❌ Quote subscription error for ${symbol}:`, error);
             return false;
         }
     }
@@ -275,37 +427,55 @@ class CTraderSDK {
     }
     
     /**
-     * Execute market order
+     * Execute market order using real cTrader SDK
      */
     async createMarketOrder(symbol, side, volume, stopLoss = null, takeProfit = null) {
         try {
-            if (!this.isConnected || !this.clientAdapter) {
-                throw new Error('SDK not connected');
+            if (!this.isConnected || !this.adapter) {
+                throw new Error('cTrader SDK not connected');
             }
             
-            Logger.info(`Creating market order: ${side} ${volume} ${symbol}`);
+            console.log(`💹 Creating ${side} market order: ${volume} ${symbol}`);
             
-            const orderParams = {
-                symbol: symbol,
+            const orderRequest = {
+                symbolId: symbol,
                 orderType: 'MARKET',
-                tradeSide: side.toLowerCase(),
-                volume: volume
+                tradeSide: side.toUpperCase() === 'BUY' ? 'BUY' : 'SELL',
+                volume: parseFloat(volume) * 100000 // Convert to lots
             };
             
-            if (stopLoss) orderParams.stopLoss = stopLoss;
-            if (takeProfit) orderParams.takeProfit = takeProfit;
+            if (stopLoss) {
+                orderRequest.stopLoss = parseFloat(stopLoss);
+            }
             
-            const result = await this.clientAdapter.createOrder(orderParams);
-            Logger.info('Order created successfully:', result);
+            if (takeProfit) {
+                orderRequest.takeProfit = parseFloat(takeProfit);
+            }
             
-            return {
-                success: true,
-                orderId: result.id,
-                message: 'Order executed successfully'
-            };
+            return new Promise((resolve) => {
+                createNewOrder(this.adapter, orderRequest).pipe(
+                    take(1),
+                    tap((result) => {
+                        console.log('✅ Market order created successfully:', result);
+                        resolve({
+                            success: true,
+                            orderId: result.orderId,
+                            message: `${side} order for ${volume} ${symbol} executed successfully`
+                        });
+                    })
+                ).subscribe({
+                    error: (error) => {
+                        console.error('❌ Market order failed:', error);
+                        resolve({
+                            success: false,
+                            error: error.message || 'Order execution failed'
+                        });
+                    }
+                });
+            });
             
         } catch (error) {
-            Logger.error('Order creation failed:', error);
+            console.error('❌ Order creation error:', error);
             return {
                 success: false,
                 error: error.message || 'Order execution failed'
@@ -314,26 +484,47 @@ class CTraderSDK {
     }
     
     /**
-     * Close position
+     * Close position using real cTrader SDK
      */
     async closePosition(positionId, volume = null) {
         try {
-            if (!this.isConnected || !this.clientAdapter) {
-                throw new Error('SDK not connected');
+            if (!this.isConnected || !this.adapter) {
+                throw new Error('cTrader SDK not connected');
             }
             
-            Logger.info(`Closing position: ${positionId}${volume ? ` (${volume})` : ''}`);
+            console.log(`🔚 Closing position: ${positionId}${volume ? ` (${volume})` : ''}`);
             
-            const result = await this.clientAdapter.closePosition(positionId, volume);
-            Logger.info('Position closed successfully:', result);
-            
-            return {
-                success: true,
-                message: 'Position closed successfully'
+            const closeRequest = {
+                positionId: positionId
             };
             
+            if (volume !== null) {
+                closeRequest.volume = parseFloat(volume) * 100000;
+            }
+            
+            return new Promise((resolve) => {
+                closePosition(this.adapter, closeRequest).pipe(
+                    take(1),
+                    tap((result) => {
+                        console.log('✅ Position closed successfully:', result);
+                        resolve({
+                            success: true,
+                            message: 'Position closed successfully'
+                        });
+                    })
+                ).subscribe({
+                    error: (error) => {
+                        console.error('❌ Position close failed:', error);
+                        resolve({
+                            success: false,
+                            error: error.message || 'Failed to close position'
+                        });
+                    }
+                });
+            });
+            
         } catch (error) {
-            Logger.error('Position close failed:', error);
+            console.error('❌ Close position error:', error);
             return {
                 success: false,
                 error: error.message || 'Failed to close position'
@@ -644,6 +835,18 @@ class CTraderSDK {
         }, 1000);
     }
     
+    /**
+     * Notify account update to UI
+     */
+    notifyAccountUpdate(account) {
+        console.log('💰 Account updated:', account);
+        
+        // Update portfolio display
+        if (window.app && window.app.updatePortfolio) {
+            window.app.updatePortfolio(account);
+        }
+    }
+    
     // Event subscription methods
     onConnection(callback) {
         this.connectionCallbacks.push(callback);
@@ -672,5 +875,11 @@ class CTraderSDK {
     }
 }
 
-// Create global SDK instance
+// Create and export SDK instance
 const ctraderSDK = new CTraderSDK();
+
+// Make available globally for compatibility
+window.ctraderSDK = ctraderSDK;
+
+// Export for ES modules
+export default ctraderSDK;
