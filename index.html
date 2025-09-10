@@ -232,11 +232,11 @@
                         <div class="portfolio-summary">
                             <div class="summary-item">
                                 <span class="label">Balance:</span>
-                                <span class="value">$10,000.00</span>
+                                <span class="value" data-balance>$10,000.00</span>
                             </div>
                             <div class="summary-item">
                                 <span class="label">Equity:</span>
-                                <span class="value">$10,150.00</span>
+                                <span class="value" data-equity>$10,150.00</span>
                             </div>
                             <div class="summary-item">
                                 <span class="label">P&L:</span>
@@ -450,14 +450,148 @@
         }
     </script>
     
-    <!-- Load remaining components as ES modules -->
-    <script type="module" src="js/config.js"></script>
-    <script type="module" src="js/ctrader-sdk.js"></script>
-    <script type="module" src="js/ai-assistant.js"></script>
-    <script type="module" src="js/chart.js"></script>
-    <script type="module" src="js/trading.js"></script>
-    <script type="module" src="js/voice.js"></script>
-    <script type="module" src="js/main.js"></script>
+    <!-- Real cTrader WebView SDK Integration -->
+    <script type="module">
+        import { 
+            createClientAdapter, 
+            createLogger,
+            handleConfirmEvent,
+            registerEvent,
+            quoteEvent,
+            executionEvent,
+            getAccountInformation,
+            getLightSymbolList,
+            createNewOrder,
+            subscribeQuotes
+        } from 'https://esm.sh/@ctrader/sdk';
+        
+        import { take, tap } from 'https://esm.sh/rxjs/operators';
+
+        console.log('🚀 Loading Real cTrader SDK...');
+        
+        // Real cTrader WebView Plugin Integration
+        class RealCTraderPlugin {
+            constructor() {
+                this.adapter = null;
+                this.logger = null;
+                this.isConnected = false;
+                this.init();
+            }
+            
+            async init() {
+                try {
+                    console.log('📡 Initializing cTrader WebView SDK...');
+                    
+                    // Create logger and adapter
+                    this.logger = createLogger(true);
+                    this.adapter = createClientAdapter({ logger: this.logger });
+                    
+                    console.log('🤝 Starting handshake...');
+                    
+                    // Perform handshake
+                    handleConfirmEvent(this.adapter, {}).pipe(take(1)).subscribe();
+                    
+                    // Register plugin
+                    registerEvent(this.adapter).pipe(
+                        take(1),
+                        tap(() => {
+                            console.log('✅ Plugin registered with cTrader!');
+                            this.isConnected = true;
+                            this.updateUI();
+                            this.startListeners();
+                        })
+                    ).subscribe({
+                        error: (error) => {
+                            console.error('❌ Registration failed:', error);
+                            this.fallbackToMockMode();
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ SDK initialization failed:', error);
+                    this.fallbackToMockMode();
+                }
+            }
+            
+            startListeners() {
+                // Listen for quotes
+                quoteEvent(this.adapter).pipe(
+                    tap((quote) => {
+                        console.log('📈 Real quote:', quote);
+                        this.updateQuoteDisplay(quote);
+                    })
+                ).subscribe();
+                
+                // Get account info
+                getAccountInformation(this.adapter).pipe(
+                    take(1),
+                    tap((account) => {
+                        console.log('💰 Real account:', account);
+                        this.updateAccountDisplay(account);
+                    })
+                ).subscribe();
+            }
+            
+            updateUI() {
+                const statusElement = document.getElementById('connection-status');
+                if (statusElement) {
+                    const indicator = statusElement.querySelector('.status-indicator');
+                    const text = statusElement.querySelector('span:last-child');
+                    if (indicator) indicator.classList.add('connected');
+                    if (text) text.textContent = 'Real cTrader Connected';
+                }
+                
+                // Remove demo mode notification
+                const demoNotice = document.querySelector('.demo-notice');
+                if (demoNotice) {
+                    demoNotice.style.display = 'none';
+                }
+            }
+            
+            updateQuoteDisplay(quote) {
+                const symbolInfo = document.getElementById('symbol-info');
+                if (symbolInfo && quote) {
+                    const priceElement = symbolInfo.querySelector('.symbol-price');
+                    if (priceElement && quote.bid) {
+                        priceElement.textContent = quote.bid.toFixed(5);
+                    }
+                }
+            }
+            
+            updateAccountDisplay(account) {
+                if (account) {
+                    const balanceElement = document.querySelector('[data-balance]');
+                    const equityElement = document.querySelector('[data-equity]');
+                    
+                    if (balanceElement && account.balance) {
+                        balanceElement.textContent = `$${account.balance.toLocaleString()}`;
+                    }
+                    if (equityElement && account.equity) {
+                        equityElement.textContent = `$${account.equity.toLocaleString()}`;
+                    }
+                }
+            }
+            
+            fallbackToMockMode() {
+                console.log('🔄 Falling back to mock mode...');
+                // Keep existing mock functionality as fallback
+            }
+        }
+        
+        // Initialize when DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            window.realCTraderPlugin = new RealCTraderPlugin();
+        });
+        
+    </script>
+    
+    <!-- Load remaining components -->
+    <script src="js/config.js"></script>
+    <script src="js/ai-assistant.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/trading.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/main.js"></script>
 
     <!-- Performance Optimization -->
     <script>
