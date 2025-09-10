@@ -28,8 +28,8 @@ git commit -m "🚀 Initial release - TradeMaster AI Pro v1.0.0
 🏆 Built for cTrader WebView Hackathon 2025
 🎯 Ready for production deployment"
 
-# Add GitHub remote (replace USERNAME with your GitHub username)
-git remote add origin https://github.com/USERNAME/trademaster-ai-pro.git
+# Add GitHub remote
+git remote add origin https://github.com/Geowahaha/webview.github.io.git
 
 # Push to main branch
 git branch -M main
@@ -46,10 +46,10 @@ git push -u origin main
 ### 4. **Access Your Plugin**
 ```
 Your plugin will be available at:
-https://USERNAME.github.io/trademaster-ai-pro/
+https://geowahaha.github.io/webview.github.io/
 
-Example:
-https://yourname.github.io/trademaster-ai-pro/
+Live Demo:
+https://geowahaha.github.io/webview.github.io/
 ```
 
 ## Alternative Deployment Methods
@@ -104,14 +104,14 @@ netlify deploy --prod
 1. **Get your deployment URL** (from GitHub Pages, Vercel, etc.)
 2. **Test the plugin** by adding URL parameters:
    ```
-   https://yourname.github.io/trademaster-ai-pro/?theme=dark&symbol=EURUSD
+   https://geowahaha.github.io/webview.github.io/?theme=dark&symbol=EURUSD
    ```
 3. **Submit to cTrader Store** with your URL
 4. **Fill plugin details:**
    - Name: TradeMaster AI Pro
    - Description: The Ultimate AI Trading Copilot
    - Category: WebView Plugins
-   - URL: https://yourname.github.io/trademaster-ai-pro/
+   - URL: https://geowahaha.github.io/webview.github.io/
 
 ### **URL Parameters (Auto-detected)**
 ```javascript
@@ -128,7 +128,7 @@ netlify deploy --prod
 ### **Basic Functionality Test**
 ```bash
 # Test URL with parameters
-curl -I "https://yourname.github.io/trademaster-ai-pro/?theme=dark&symbol=EURUSD"
+curl -I "https://geowahaha.github.io/webview.github.io/?theme=dark&symbol=EURUSD"
 
 # Should return 200 OK
 ```

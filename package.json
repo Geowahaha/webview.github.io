@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Professional AI-powered WebView plugin for cTrader - The Ultimate Trading Copilot",
   "main": "index.html",
-  "homepage": "https://github.com/USERNAME/trademaster-ai-pro#readme",
+  "homepage": "https://geowahaha.github.io/webview.github.io/",
   "scripts": {
     "dev": "live-server --port=3000 --open=/",
     "build": "npm run minify && npm run optimize",
@@ -29,10 +29,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/USERNAME/trademaster-ai-pro.git"
+    "url": "https://github.com/Geowahaha/webview.github.io.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/trademaster-ai-pro/issues"
+    "url": "https://github.com/Geowahaha/webview.github.io/issues"
   },
   "engines": {
     "node": ">=16.0.0"

@@ -1,8 +1,9 @@
 # TradeMaster AI Pro - Professional WebView Plugin for cTrader
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/trademaster-ai-pro)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Geowahaha/webview.github.io)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![cTrader](https://img.shields.io/badge/cTrader-WebView%20Plugin-orange.svg)](https://ctrader.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-geowahaha.github.io-success.svg)](https://geowahaha.github.io/webview.github.io/)
 
 > **The Ultimate AI Trading Copilot - From Analysis to Execution in One Click**
 
@@ -69,10 +70,10 @@ A professional-grade AI-powered WebView plugin for cTrader that combines advance
 ### **Development Setup**
 ```bash
 # Clone the repository
-git clone https://github.com/trademaster-ai-pro/plugin
+git clone https://github.com/Geowahaha/webview.github.io.git
 
 # Navigate to directory
-cd plugin
+cd webview.github.io
 
 # Install dependencies
 npm install
